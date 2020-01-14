@@ -6,6 +6,7 @@ import nltk
 import numpy as np
 import scipy
 import math
+import ksenticnet as k
 
 
 
@@ -16,6 +17,7 @@ pos_features = collections.defaultdict(int)
 mpqa_features = collections.defaultdict(int)
 vocab_features= collections.defaultdict(int)
 cosine_features_dict= collections.defaultdict(int)
+ksenticnet_features=collections.defaultdict(int)
 
 #기존의 파일 불러오기
 #list_file = open('/Users/rjsgm/PycharmProjects/Covefefe_kor/output_folder/pos.txt', 'r',encoding='UTF-8').read().split('\n')
@@ -369,16 +371,6 @@ def get_cosine_distance(data):
     pos_list = pos.to_dict('list')
     token_list = token.to_dict('list')
 
-    ''' This function extracts cosine distance features.
-    Parameters:
-    transcript_utterances: list of lists of strings (words), each row is a plaintext utterance in the transcript.
-    stopwords: list of string, words to be removed.
-    inf_value: int, value for infinity.
-    Returns:
-    cosine_keys: list of strings, names of extracted features.
-    cosine_features_dict: dictionary, mapping feature name to feature value.
-    '''
-
     cosine_keys = ["ave_cos_dist", "min_cos_dist", "cos_cutoff_00", "cos_cutoff_03", "cos_cutoff_05"]
     cosine_features_dict = {}
 
@@ -396,11 +388,6 @@ def get_cosine_distance(data):
     #sentence의 수 or num_utterances가 무엇인지?????
     num_utterances = len(sentence_file)
 
-
-    # Create a word vector for each utterance, N x V
-    # where N is the num of utterances and V is the vocab size
-    # The vector is 1 if the vocab word is present in the utterance,
-    # 0 otherwise (i.e., one hot encoded).
     word_vectors = []
     for i,t_value in enumerate(list(token_list.values())[0]):
         word_vectors.append(len(vocab_words)*[0]) # init
@@ -408,9 +395,6 @@ def get_cosine_distance(data):
             if str(vocab_words[j]) in str(t_value):
                 word_vectors[i][j] += 1
 
-    # Calculate cosine DISTANCE between each pair of utterances in
-    # this transcript (many entries with small distances means the
-    # subject is repeating a lot of words).
     average_dist = 0.0
     min_dist = 1.0
     num_similar_00 = 0.0
@@ -419,9 +403,6 @@ def get_cosine_distance(data):
     num_pairs = 0
     for i in range(num_utterances):
         for j in range(i):
-            # The norms of the vectors might be zero if the utterance contained only
-            # stopwords which were removed above. Only compute cosine distance if the
-            # norms are non-zero; ignore the rest.
             norm_i, norm_j = np.linalg.norm(word_vectors[i]), np.linalg.norm(word_vectors[j])
             if norm_i > 0 and norm_j > 0:
                 cosine_dist = scipy.spatial.distance.cosine(word_vectors[i], word_vectors[j])
@@ -432,7 +413,6 @@ def get_cosine_distance(data):
                 if cosine_dist < min_dist:
                     min_dist = cosine_dist
 
-                # Try different cutoffs for similarity
                 if cosine_dist < 0.001: #similarity threshold
                     num_similar_00 += 1
                 if cosine_dist <= 0.3: #similarity threshold
@@ -440,9 +420,7 @@ def get_cosine_distance(data):
                 if cosine_dist <= 0.5: #similarity threshold
                     num_similar_05 += 1
 
-    # The total number of unique utterance pairwise comparisons is <= N*(N-1)/2
-    # (could be less if some utterances contain only stopwords and end up empty after
-    # stopword removal).
+
     denom = num_pairs
 
     if denom >= 1:
@@ -462,6 +440,29 @@ def get_cosine_distance(data):
 
 
 
+def get_ksenticnet_feature(data):
+    pos = data.loc[:, ['pos']]
+    token = data.loc[:, ['token']]
+    pos_list = pos.to_dict('list')
+    token_list = token.to_dict('list')
+
+    ksenticnet_keys=[]
+    ksenticnet_features={}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -476,10 +477,10 @@ print(get_mpqa_norm_features(list_file)[1])
 print(get_vocab_richness_measures(list_file)[1])
 print(get_cosine_distance(list_file)[1])
 
-#s
 
-print(list_file)
-print(mpqa_features.keys())
+
+#print(list_file)
+#print(mpqa_features.keys())
 #print(collections.Counter(pos_features))
 #print(collections.Counter(mpqa_features))
 #print(collections.Counter(vocab_features))

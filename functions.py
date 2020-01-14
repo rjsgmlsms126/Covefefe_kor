@@ -1,8 +1,10 @@
 import nltk
 import os
 import re
-import functions as f
 import csv
+import ksenticnet as k
+
+
 
 def get_frequency_norms():
     """Parameters:
@@ -38,4 +40,20 @@ def get_mpqa_lexicon():
 
     return [words, types, polarities]
 
+def get_ksenticnet():
+    ksentKeys = k.ksenticnet.keys()
+    ksentValues = k.ksenticnet.values()
+    ksentValuesKeys = list(ksentKeys)
+    ksentValuesList=list(ksentValues)
 
+    words=[word for word in ksentValuesKeys]
+    type1 = [type[4] for type in ksentValuesList]
+    type2 = [type[5] for type in ksentValuesList]
+    synlen= [len(type[8:]) for type in ksentValuesList]
+    return [words,type1,type2,synlen]
+
+
+#print(get_ksenticnet()[0])
+#print(get_ksenticnet()[1])
+#print(get_ksenticnet()[2])
+#print(get_ksenticnet()[3])
