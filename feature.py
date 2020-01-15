@@ -234,24 +234,6 @@ def get_pos_features(data):
 
     return pos_keys,pos_features
 
-#coisne distance
-
-def get_cosine_distance(data):
-    pos = data.loc[:, ['pos']]
-    token = data.loc[:, ['token']]
-    pos_list = pos.to_dict('list')
-    token_list = token.to_dict('list')
-
-    cosine_keys = ["ave_cos_dist", "min_cos_dist", "cos_cutoff_00", "cos_cutoff_03", "cos_cutoff_05"]
-    cosine_features_dict = {}
-
-    #fdist_vocab = nltk.probability.FreqDist([for word in norms_word])
-    vocab_words = list(fdist_vocab.keys())
-
-    num_utterances = len(norms_word)
-
-    word_vectors = []
-
 
 def get_mpqa_norm_features(data):
 
@@ -446,8 +428,69 @@ def get_ksenticnet_feature(data):
     pos_list = pos.to_dict('list')
     token_list = token.to_dict('list')
 
-    ksenticnet_keys=[]
-    ksenticnet_features={}
+    ksenticnet_keys=['noun_synset_len','verb_synset_len']
+    ksent_ambigs_noun=[]
+    ksent_ambigs_verb=[]
+    ksent_ambigs=[]
+
+    for p_value in pos_list.values():
+
+        for i in range(len(p_value)):
+            # 형태소 txt에서 순번
+            pos_num = i
+
+            if "NN" in p_value[i]:
+                for t_value in token_list.values():
+                    targetWord= t_value[pos_num]
+
+                    if targetWord in f.get_ksenticnet()[0]:
+                        targetKsenticnetWord=f.get_ksenticnet()[0].index(targetWord)
+                        synsetSum=f.get_ksenticnet()[3][targetKsenticnetWord]
+                        ksent_ambigs_noun += [synsetSum]
+
+
+                        ksenticnet_features["noun_synset_number"]+=1
+                        ksenticnet_features["noun_synset_len_sum"] += synsetSum
+
+            elif "VV" in p_value[i]:
+                for t_value in token_list.values():
+                    targetWord = t_value[pos_num]
+
+                    if targetWord in f.get_ksenticnet()[0]:
+                        targetKsenticnetWord = f.get_ksenticnet()[0].index(targetWord)
+                        synsetSum = f.get_ksenticnet()[3][targetKsenticnetWord]
+
+                        ksent_ambigs_verb+=[synsetSum]
+
+                        ksenticnet_features["verb_synset_number"] += 1
+                        ksenticnet_features["verb_synset_len_sum"] += synsetSum
+
+            for t_value in token_list.values():
+                targetWord = t_value[pos_num]
+                if targetWord in f.get_ksenticnet()[0]:
+                    targetKsenticnetWord = f.get_ksenticnet()[0].index(targetWord)
+                    synsetSum = f.get_ksenticnet()[3][targetKsenticnetWord]
+                    ksent_ambigs+=[synsetSum]
+
+                    ksenticnet_features["synset_number"] += 1
+                    ksenticnet_features["synset_len_sum"] += synsetSum
+
+    ksenticnet_features["avg_ksent_ambig_nn"] =np.mean(ksent_ambigs_noun) if ksent_ambigs_noun else nan_value
+    ksenticnet_features["sd_ksent_ambig_nn"] = np.std(ksent_ambigs_noun) if ksent_ambigs_noun else nan_value
+    ksenticnet_features["kurt_ksent_ambig_nn"] = scipy.stats.kurtosis(ksent_ambigs_noun) if ksent_ambigs_noun else nan_value
+    ksenticnet_features["skew_ksent_ambig_nn"] = scipy.stats.skew(ksent_ambigs_noun) if ksent_ambigs_noun else nan_value
+
+    ksenticnet_features["avg_ksent_ambig_vb"] = np.mean(ksent_ambigs_verb) if ksent_ambigs_verb else nan_value
+    ksenticnet_features["sd_ksent_ambig_vb"] = np.std(ksent_ambigs_verb) if ksent_ambigs_verb else nan_value
+    ksenticnet_features["kurt_ksent_ambig_vb"] = scipy.stats.kurtosis(ksent_ambigs_verb) if ksent_ambigs_verb else nan_value
+    ksenticnet_features["skew_ksent_ambig_vb"] = scipy.stats.skew(ksent_ambigs_verb) if ksent_ambigs_verb else nan_value
+
+    ksenticnet_features["avg_ksent_ambig"] = np.mean(ksent_ambigs) if ksent_ambigs else nan_value
+    ksenticnet_features["sd_ksent_ambig"] = np.std(ksent_ambigs) if ksent_ambigs else nan_value
+    ksenticnet_features["kurt_ksent_ambig"] = scipy.stats.kurtosis(ksent_ambigs) if ksent_ambigs else nan_value
+    ksenticnet_features["skew_ksent_ambig"] = scipy.stats.skew(ksent_ambigs) if ksent_ambigs else nan_value
+
+    return ksenticnet_keys, ksenticnet_features
 
 
 
@@ -457,16 +500,14 @@ def get_ksenticnet_feature(data):
 
 
 
+#get_ksenticnet_feature(list_file)
+print(get_ksenticnet_feature(list_file)[1])
 
 
 
 
 
-
-
-
-
-
+"""
 get_pos_features(list_file)
 get_mpqa_norm_features(list_file)
 get_vocab_richness_measures(list_file)
@@ -477,7 +518,7 @@ print(get_mpqa_norm_features(list_file)[1])
 print(get_vocab_richness_measures(list_file)[1])
 print(get_cosine_distance(list_file)[1])
 
-
+"""
 
 #print(list_file)
 #print(mpqa_features.keys())
