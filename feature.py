@@ -23,10 +23,11 @@ ksenticnet_features=collections.defaultdict(int)
 #list_file = open('/Users/rjsgm/PycharmProjects/Covefefe_kor/output_folder/pos.txt', 'r',encoding='UTF-8').read().split('\n')
 
 #새로운 pandas 형식의 txt pos,token 있는 txt파일 불러오기
-list_file=pd.read_csv('/Users/rjsgm/PycharmProjects/Covefefe_kor/output_folder/pos.txt',names=['pos','token'])
-sentence_file=pd.read_csv('/Users/rjsgm/PycharmProjects/Covefefe_kor/input_folder/a.txt',names=['sentence'])
+list_file=pd.read_csv('/Users/rjsgm/PycharmProjects/Covefefe_kor/output_folder/ai_merge000017/pos.txt',names=['pos','token'])
+sentence_file=pd.read_csv('/Users/rjsgm/PycharmProjects/Covefefe_kor/output_folder/ai_merge000017/token.txt',names=['sentence'])
 
 
+list_file=list_file.fillna(value='NA')
 
 
 # freq 가져오기
@@ -45,8 +46,7 @@ mpqa_types = mpqa_list[1]
 mpqa_polarities = mpqa_list[2]
 
 
-total_tk=len(list_file.index)
-pos_features['word_length'] =total_tk
+
 
 
 inf_value=10^10
@@ -54,9 +54,8 @@ nan_value=-1
 
 
 
-list_string_file=' '.join(list_file['pos'])
+list_string_file=' '.join(map(str,list_file['pos']))
 total_words=len(list_file['pos'])
-
 
 def get_pos_features(data):
     # 데이터 [형태소,단어] 각각 pos , token으로 분리해서 따로 데이터 다루게만듬
@@ -65,6 +64,8 @@ def get_pos_features(data):
     pos_list = pos.to_dict('list')
     token_list = token.to_dict('list')
 
+    total_tk = len(data.index)
+    pos_features['word_length'] = total_tk
 
     #기본 피처 추가
     pos_keys = ['word_length']
@@ -85,18 +86,20 @@ def get_pos_features(data):
     ########################################################## 여기까지 해결
 
     for p_value in pos_list.values():
+
+
         for i in range(len(p_value)):
             #형태소 txt에서 순번
             pos_num=i
 
             if get_density:
-                if ("NNG" or "VV" or "VA" or "MAG" or "SF" or "SE" or "SSO" or "SSC" or "SC" or "SY") in p_value[i]:
+                if ("NNG" or "VV" or "VA" or "MAG" or "SF" or "SE" or "SSO" or "SSC" or "SC" or "SY") in p_value[pos_num]:
                     pos_features['content_density'] += 1
-                if ("VV" or "VA" or "MAG" or "MAJ") in p_value[i]:
+                if ("VV" or "VA" or "MAG" or "MAJ") in p_value[pos_num]:
                     pos_features['prop_density'] += 1
 
 
-            if "NN" in p_value[i]:
+            if "NN" in p_value[pos_num]:
                 pos_features['nouns']=pos_features['nouns']+1
 
                 ##여기서부터 다시 하기 freq
@@ -110,7 +113,7 @@ def get_pos_features(data):
                              pos_num=0
 
 
-            elif "VV" in p_value[i]:
+            elif "VV" in p_value[pos_num]:
                 pos_features['verbs']=pos_features['verbs']+1
 
                 for t_value in token_list.values():
@@ -123,24 +126,25 @@ def get_pos_features(data):
                              pos_num=0
 
             else:
-                if "NP" in p_value[i]:
+                if "NP" in p_value[pos_num]:
                     pos_features['pronouns'] = pos_features['pronouns'] + 1
-                elif "MM" in p_value[i]:
+                elif "MM" in p_value[pos_num]:
                     pos_features['determiners'] = pos_features['determiners'] + 1
-                elif "MAG" in p_value[i]:
+                elif "MAG" in p_value[pos_num]:
                     pos_features['adverbs'] = pos_features['adverbs'] + 1
-                elif "VA" in p_value[i]:
+                elif "VA" in p_value[pos_num]:
                     pos_features['adjectives'] = pos_features['adjectives'] + 1
-                elif "MAJ" in p_value[i]:
+                elif "MAJ" in p_value[pos_num]:
                     pos_features['coordinate'] = pos_features['coordinate'] + 1
                 elif ("JKS"or"JKC"or"JKG"or"JKO"or"JKV"or"JKQ") in p_value[i]:
                     pos_features['prepositions'] = pos_features['prepositions'] + 1
 
 
 
-            if p_value[i] in FunctionTable.function_tags:
+            if p_value[pos_num] in FunctionTable.function_tags:
                 pos_features['function'] += 1
 
+        for t_value in token_list.values():
             if get_frequency_norms and t_value[pos_num] in norms_word:
                 freq_loc = norms_word.index(t_value[pos_num])
                 pos_features["frequency"] += float(norms_log10wf[freq_loc][1])  # use log10WF
@@ -403,6 +407,7 @@ def get_cosine_distance(data):
                     num_similar_05 += 1
 
 
+
     denom = num_pairs
 
     if denom >= 1:
@@ -422,7 +427,19 @@ def get_cosine_distance(data):
 
 
 
-def get_ksenticnet_feature(data):
+def get_ksenticnet():
+    ksentKeys = k.ksenticnet.keys()
+    ksentValues = k.ksenticnet.values()
+    ksentValuesKeys = list(ksentKeys)
+    ksentValuesList=list(ksentValues)
+
+    words=[word for word in ksentValuesKeys]
+    type1 = [type[4] for type in ksentValuesList]
+    type2 = [type[5] for type in ksentValuesList]
+    synlen= [len(type[8:]) for type in ksentValuesList]
+    return [words,type1,type2,synlen]
+
+def get_ksenticnet_synset_feature(data):
     pos = data.loc[:, ['pos']]
     token = data.loc[:, ['token']]
     pos_list = pos.to_dict('list')
@@ -443,9 +460,9 @@ def get_ksenticnet_feature(data):
                 for t_value in token_list.values():
                     targetWord= t_value[pos_num]
 
-                    if targetWord in f.get_ksenticnet()[0]:
-                        targetKsenticnetWord=f.get_ksenticnet()[0].index(targetWord)
-                        synsetSum=f.get_ksenticnet()[3][targetKsenticnetWord]
+                    if targetWord in get_ksenticnet()[0]:
+                        targetKsenticnetWord=get_ksenticnet()[0].index(targetWord)
+                        synsetSum=get_ksenticnet()[3][targetKsenticnetWord]
                         ksent_ambigs_noun += [synsetSum]
 
 
@@ -456,9 +473,9 @@ def get_ksenticnet_feature(data):
                 for t_value in token_list.values():
                     targetWord = t_value[pos_num]
 
-                    if targetWord in f.get_ksenticnet()[0]:
-                        targetKsenticnetWord = f.get_ksenticnet()[0].index(targetWord)
-                        synsetSum = f.get_ksenticnet()[3][targetKsenticnetWord]
+                    if targetWord in get_ksenticnet()[0]:
+                        targetKsenticnetWord = get_ksenticnet()[0].index(targetWord)
+                        synsetSum = get_ksenticnet()[3][targetKsenticnetWord]
 
                         ksent_ambigs_verb+=[synsetSum]
 
@@ -467,9 +484,9 @@ def get_ksenticnet_feature(data):
 
             for t_value in token_list.values():
                 targetWord = t_value[pos_num]
-                if targetWord in f.get_ksenticnet()[0]:
-                    targetKsenticnetWord = f.get_ksenticnet()[0].index(targetWord)
-                    synsetSum = f.get_ksenticnet()[3][targetKsenticnetWord]
+                if targetWord in get_ksenticnet()[0]:
+                    targetKsenticnetWord = get_ksenticnet()[0].index(targetWord)
+                    synsetSum = get_ksenticnet()[3][targetKsenticnetWord]
                     ksent_ambigs+=[synsetSum]
 
                     ksenticnet_features["synset_number"] += 1
@@ -500,29 +517,43 @@ def get_ksenticnet_feature(data):
 
 
 
-#get_ksenticnet_feature(list_file)
-print(get_ksenticnet_feature(list_file)[1])
-
 
 
 
 
 """
-get_pos_features(list_file)
-get_mpqa_norm_features(list_file)
-get_vocab_richness_measures(list_file)
-get_cosine_distance(list_file)
-
 print(get_pos_features(list_file)[1])
 print(get_mpqa_norm_features(list_file)[1])
 print(get_vocab_richness_measures(list_file)[1])
 print(get_cosine_distance(list_file)[1])
-
 """
+#print(get_ksenticnet_synset_feature(list_file)[1])
+"""
+featureSum={**get_pos_features(list_file)[1],**get_mpqa_norm_features(list_file)[1],**get_vocab_richness_measures(list_file)[1],**get_cosine_distance(list_file)[1],**get_ksenticnet_synset_feature(list_file)[1]}
 
+print(featureSum)
 #print(list_file)
 #print(mpqa_features.keys())
 #print(collections.Counter(pos_features))
 #print(collections.Counter(mpqa_features))
 #print(collections.Counter(vocab_features))
 
+import csv
+with open('/Users/rjsgm/PycharmProjects/Covefefe_kor/example1.csv', 'w') as f:
+    fieldnames=['word_length','prop_density','content_density','pronouns',
+                'function','adverbs','nouns','noun_frequency','noun_freq_num',
+                'verbs','prepositions','adjectives','determiners','verb_frequency',
+                'verb_freq_num','frequency','freq_num','nvratio','prp_ratio','noun_ratio',
+                'coordinate','subordinate','sub_coord_ratio','mpqa_num','mpqa_strong_positive',
+                'mpqa_strong_negative','mpqa_weak_positive','mpqa_weak_negative','MATTR_10',
+                'MATTR_20','MATTR_30','MATTR_40','MATTR_50','TTR','brunet','honore','ave_cos_dist',
+                'min_cos_dist','cos_cutoff_00','cos_cutoff_03','cos_cutoff_05','synset_number',
+                'synset_len_sum','noun_synset_number','noun_synset_len_sum','verb_synset_number','verb_synset_len_sum',
+                'avg_ksent_ambig_nn','sd_ksent_ambig_nn','kurt_ksent_ambig_nn','skew_ksent_ambig_nn',
+                'avg_ksent_ambig_vb','sd_ksent_ambig_vb','kurt_ksent_ambig_vb','skew_ksent_ambig_vb',
+                'avg_ksent_ambig','sd_ksent_ambig','kurt_ksent_ambig','skew_ksent_ambig','']
+    writer = csv.DictWriter(f,fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerow(featureSum)
+
+"""

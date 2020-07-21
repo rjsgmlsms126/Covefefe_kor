@@ -21,15 +21,15 @@ f_pos = open('/Users/rjsgm/PycharmProjects/Covefefe_kor/output_folder/pos.txt', 
 f_token = open('/Users/rjsgm/PycharmProjects/Covefefe_kor/output_folder/token.txt', 'w',encoding='UTF-8')
 
 
-stopwords=contents1.split('\n')
 word_tokens=word_tokenize(contents)
 
-
+#stopwords=contents1.split('\n')
+"""
 result =""
 for w in word_tokens:
     if w not in stopwords:
         result=result+w+' '
-
+"""
 
 def clean_str(text):
     pattern = '([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)' # E-mail제거
@@ -90,4 +90,4 @@ def Nocleandata(data):
 
 
 
-cleandata(contents)
+Nocleandata(contents)
