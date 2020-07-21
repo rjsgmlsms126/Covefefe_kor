@@ -10,7 +10,7 @@
 * functions.py --> get_frequency_norms, get_mpqa_lexicon, get_ksenticnet 함수호출  
 * functiontable_all.py --> function_tags 태그  
 * ksenticnet.py --> 감정분석 테이블  
-* stopwords.txt --> 불용어 테이블 
+* stopwords.txt --> 불용어 테이블  
 
-
+<img src= "https://user-images.githubusercontent.com/27187597/88075821-46c3a480-cbb4-11ea-8b22-f5fcc16cfba8.png" width ="50%"></img>
 ## Known Bugs
